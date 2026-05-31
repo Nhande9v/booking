@@ -22,8 +22,15 @@ const AuthReducer = (state, action) => {
     case "LOGIN_FAILURE":
       return { user: null, loading: false, error: action.payload };
     // khi logout reset user và tắt loading
-      case "LOGOUT":
+    case "LOGOUT":
       return { user: null, loading: false, error: null };
+    case "UPDATE_USER":
+      return { 
+        ...state, 
+        user: action.payload,
+        loading: false, 
+        error: null 
+      };
     default:
       return state;
   }

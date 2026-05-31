@@ -4,10 +4,54 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
+export const upgradeToProvider = async (req, res, next) => {
+  const userId = req.params.id; // Lấy ID từ URL
+  const updateData = req.body;  // Dữ liệu từ Frontend gửi lên
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId, // THÊM BIẾN NÀY VÀO ĐẦY ĐỦ
+      {
+        $set: {
+          role: "provider",
+          providerDetails: {
+            businessName: updateData.businessName,
+            phoneNumber: updateData.phoneNumber,
+            address: updateData.address,
+            identityCard: updateData.identityCard,
+            bankAccount: {
+              bankName: updateData.bankName,
+              accountNumber: updateData.accountNumber,
+              accountName: updateData.accountName,
+            },
+            isVerified: true,
+          },
+        },
+      },
+      { 
+        new: true, 
+        returnDocument: 'after' // Để lấy dữ liệu mới nhất sau khi update
+      }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng này!" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Nâng cấp thành công!",
+      user: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const updatePassword = async (req, res, next) => {
   try {
-    console.log("User ID from token:", req.user.id); // Thêm dòng này để debug
-    const user = await User.findById(req.user.id).select("+password");// Lấy user từ token và bao gồm cả trường password
+    console.log("User ID from token:", req.user.id); 
+    const user = await User.findById(req.user.id).select("+password");
     const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
     if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
 
@@ -47,14 +91,17 @@ export const login = async (req, res) => {
     const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
     if (!isPasswordCorrect) return res.status(400).json("Wrong password or username!");
 
-    // Tạo Token (để lưu phiên đăng nhập)
     const token = jwt.sign(
       { id: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET
     );
 
     const { password, isAdmin, ...otherDetails } = user._doc;
-    res.status(200).json({token, details: { ...otherDetails }, isAdmin });
+    res.cookie("access_token", token, {
+      httpOnly: true, 
+    })
+    .status(200)
+    .json({ details: { ...otherDetails }, isAdmin });
   } catch (err) {
     res.status(500).json(err);
   }

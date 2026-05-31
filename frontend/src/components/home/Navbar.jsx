@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Globe,  Menu, LogOut, ChevronDown, Briefcase, Settings } from "lucide-react"; 
+import { Globe,  Menu, LogOut, ChevronDown, Briefcase, Settings, UserPlus } from "lucide-react"; 
 import { AuthContext } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -44,10 +44,12 @@ const Navbar = () => {
                         </div>
                         <div className="absolute -inset-1 bg-blue-500/20 blur-lg rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <span className={`text-2xl font-black tracking-tight transition-colors duration-300 ${
-                        isScrolled ? "text-slate-900" : "text-slate-600"
-                    }`}>
-                        Azura<span className="text-blue-500">Haven</span>
+                    <span
+                        className={`text-2xl font-black tracking-tight transition-colors duration-300 
+                        ${isScrolled ? "bg-gradient-to-r from-blue-600 to-blue-500" : "bg-gradient-to-r from-blue-800 to-blue-500"} 
+                        bg-clip-text text-transparent`}
+                        >
+                        A.<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-cyan-300 italic font-serif">Laura</span>
                     </span>
                 </Link>
 
@@ -98,21 +100,41 @@ const Navbar = () => {
                                     <>
                                         <div className="fixed inset-0 z-[-1]" onClick={() => setShowUserMenu(false)} />
                                         <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 p-2 animate-in fade-in zoom-in duration-200">
-                                            <Link   to="/settings" 
-                                                    onClick={() => setShowUserMenu(false)}
-                                                    className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors">
+                                            
+                                            {/* KIỂM TRA ROLE PROVIDER */}
+                                            {(user?.role === "provider" || user?.details?.role === "provider") ? (
+                                                <>
+                                                    <Link to="/host/dashboard" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-xl transition-colors font-bold">
+                                                        <Briefcase size={18} /> Host Dashboard
+                                                    </Link>
+                                                    <Link to="/create-hotel" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-green-600 hover:bg-green-50 rounded-xl transition-colors font-bold">
+                                                        <UserPlus size={18} /> List your property
+                                                    </Link>
+                                                </>
+                                            ) : (
+                                                /* NẾU LÀ USER THƯỜNG THÌ HIỆN BECOME A HOST */
+                                                <Link to="/become-a-host" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 rounded-xl transition-colors font-bold">
+                                                    <UserPlus size={18} /> Become a Host
+                                                </Link>
+                                            )}
+
+                                            <div className="h-[1px] bg-slate-100 my-2 mx-2" />
+
+                                            <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors">
                                                 <Settings size={18} /> Account Settings
                                             </Link>
+                                            
                                             <Link to="/bookings" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors">
                                                 <Briefcase size={18} /> My Bookings
                                             </Link>
+
                                             <div className="h-[1px] bg-slate-100 my-2 mx-2" />
                                             <button 
                                                 onClick={handleLogout}
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                                             >
                                                 <LogOut size={18} /> Sign Out
-                                            </button>
+                                            </button> 
                                         </div>
                                     </>
                                 )}
@@ -132,10 +154,6 @@ const Navbar = () => {
                     </div>
                 </nav>
 
-                {/* Mobile Toggle */}
-                <button className={`md:hidden p-2 rounded-xl ${isScrolled ? "text-slate-900" : "text-white"}`}>
-                    <Menu size={28} />
-                </button>
             </div>
         </header>
     );

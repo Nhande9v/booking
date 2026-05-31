@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import HeroSection from "../components/HeroSection";
-import FeaturedHotels from "../components/FeaturedHotels";
-import Features from "@/components/Features";
-import HomeExtra from "@/components/HomeExtra";
+import HeroSection from "../components/home/HeroSection";
+import FeaturedHotels from "../components/home/FeaturedHotels";
+import DiscountSection from "../components/home/DiscountSection";
+import Features from "@/components/home/Features";
+import HomeExtra from "@/components/home/HomeExtra";
 import api from "../lib/axios";
 
 const Homepage = () => {
@@ -27,6 +28,7 @@ const Homepage = () => {
         <div>
             <HeroSection />
             <FeaturedHotels hotels={hotelBuffer} />
+            <DiscountSection hotels={hotelBuffer}/>
             <HomeExtra />
             <Features />
         </div>

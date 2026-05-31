@@ -1,18 +1,36 @@
 import React from 'react';
 import { Card } from '@/components/ui/card'; 
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star } from 'lucide-react'; // Thêm icon để chuyên nghiệp hơn
+import { MapPin, Star } from 'lucide-react'; 
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
-const FeaturedHotels = ({ hotels }) => {
-    if (!hotels || hotels.length === 0) {
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN').format(price);
+};
+const FeaturedHotels = ({ hotels, loading }) => {
+    if (loading || !hotels || hotels.length === 0) {
         return (
-            <div className="py-24 text-center">
-                <div className="inline-block animate-pulse text-slate-400 font-medium">
-                    Discovering sanctuaries...
+            <section className="py-20 px-6 bg-[#fcfcfd]">
+                <div className='max-w-7xl mx-auto'>
+                    {/* Giữ nguyên phần Header Skeleton hoặc Header thật nếu muốn */}
+                    <div className='flex flex-wrap items-stretch gap-8'>
+                        {/* Main Card Skeleton (Chiếm 68%) */}
+                        <div className="w-full lg:w-[calc(68%-1rem)]">
+                            <div className="w-full h-[600px] bg-slate-200 animate-pulse rounded-[2rem]"></div>
+                        </div>
+
+                        {/* Side Cards Skeleton (Chiếm 32%) */}
+                        <div className='w-full lg:w-[calc(32%-1rem)] flex flex-col gap-8'>
+                            <div className="h-[284px] bg-slate-200 animate-pulse rounded-[1.5rem]"></div>
+                            <div className="h-[284px] bg-slate-200 animate-pulse rounded-[1.5rem]"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </section>
         );
     }
+        
 
     const mainHotel = hotels[0]; 
     const sideHotels = hotels.slice(1, 3); 
@@ -22,20 +40,46 @@ const FeaturedHotels = ({ hotels }) => {
         return photoData?.split(',')[0];
     };
 
-    return (
-        <section className="py-20 px-6 bg-[#fcfcfd]">
-            <div className='max-w-7xl mx-auto'>
-                {/* Header Section */}
-                <div className='flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-6'>
-                    <div className='max-w-2xl'>
-                        <span className="text-blue-600 font-bold text-sm uppercase tracking-[0.2em] mb-3 block">
-                            Featured Collection
-                        </span>
-                        <h2 className='text-4xl md:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight'>
-                            Hand-picked sanctuaries for the <br className="hidden md:block" /> discerning traveler.
-                        </h2>
-                    </div>
+     const container = {
+        hidden: {},
+        show: {
+            transition: { staggerChildren: 0.2 }
+        }
+    };
 
+    const item = {
+        hidden: { opacity: 0, y: 40 },
+        show: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.6, ease: "easeOut" }
+        }
+    };
+
+    return (
+        <motion.section
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="py-20 px-6 bg-[#fcfcfd]"
+        >
+            <motion.div variants={item} initial="hidden" whileInView="show"  className='max-w-7xl mx-auto'>
+                {/* Header Section */}
+                <div className='mb-14'>
+                    <span className="inline-block px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
+                        Exclusive Stays
+                    </span>
+                    <div className='flex flex-col md:flex-row md:justify-between md:items-end gap-6'>
+                        <h2 className='text-5xl md:text-7xl font-black text-slate-900 leading-none tracking-tighter'>
+                            Sanctuaries for <br /> 
+                            <span className="text-blue-600">The Discerning.</span>
+                        </h2>
+                        <Button variant="link" className="text-blue-600 font-bold p-0 h-auto text-lg hover:no-underline group">
+                            Explore all properties 
+                            <span className="inline-block transition-transform group-hover:translate-x-2 ml-2">→</span>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className='flex flex-wrap items-stretch gap-8'>
@@ -63,7 +107,7 @@ const FeaturedHotels = ({ hotels }) => {
                                     </div>
                                     <h3 className='font-bold text-4xl mb-2'>{mainHotel.name}</h3>
                                     <p className="text-xl font-light text-white/90">
-                                        Starting from <span className="font-bold text-white">VND {mainHotel.price}</span> / night
+                                        Starting from <span className="text-white">{formatPrice(mainHotel.price)}</span>/ night
                                     </p>
                                 </div>
                             </div>
@@ -101,7 +145,7 @@ const FeaturedHotels = ({ hotels }) => {
                                             {hotel.city}
                                         </p>
                                         <p className="text-slate-900 font-medium">
-                                            <span className="text-lg font-black text-blue-600">VND {hotel.price}</span>
+                                            <span className="text-lg font-black text-blue-600">VND {formatPrice(hotel.price)}</span>
                                             <span className="text-xs text-slate-400 ml-1">/night</span>
                                         </p>
                                     </div>
@@ -110,8 +154,8 @@ const FeaturedHotels = ({ hotels }) => {
                         ))}
                     </div>
                 </div>
-            </div>
-        </section>
+            </motion.div>
+        </motion.section>
     );
 };
 
