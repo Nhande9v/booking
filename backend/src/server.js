@@ -7,6 +7,7 @@ import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from "cookie-parser";
+import healthRouters from './routes/healthRouters.js';
 
 dotenv.config();
 const PORT = process.env.PORT || 5001;
@@ -32,6 +33,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+app.use("/api/health",healthRouters);
 app.use("/api/bookings", bookingRouters);
 app.use("/api/rooms", roomRouters);
 app.use("/api/hotels", hotelRouters);
