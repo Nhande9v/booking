@@ -1,0 +1,22 @@
+# ---- Stage 1: Dependencies ----
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+# ---- Stage 2: Runtime ----
+FROM node:20-alpine AS runtime
+WORKDIR /app
+RUN apk add --no-cache dumb-init
+# Tạo user non-root cho bảo mật
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=deps --chown=app:app /app/node_modules ./node_modules
+COPY --chown=app:app . .
+USER app
+EXPOSE 5001
+ENV NODE_ENV=production
+# ENTRYPOINT + CMD: dumb-init làm PID 1, node là process con
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "src/server.js"]
+
+

@@ -1,0 +1,57 @@
+services:
+  # --- Cấu hình cho phần Backend ---
+  backend-app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: booking-backend
+    ports:
+      - "5001:5001" # Map cổng 5001 từ máy thật vào cổng 5001 của container
+    env_file:
+      - ./backend/.env # Nạp file .env từ thư mục backend vào container
+    networks:
+      - booking-net
+    depends_on:
+      database-app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 40s
+    restart: always
+
+  # --- Cấu hình cho phần Frontend ---
+  frontend-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: booking-frontend
+    ports:
+      - "5173:80" # Map cổng 5173 từ máy thật vào cổng 80 (Nginx) của container
+    networks:
+      - booking-net
+    depends_on:
+      backend-app:
+        condition: service_healthy # Chỉ start frontend khi backend đã healthy
+    restart: always
+
+  # --- Cấu hình cho phần Database ---
+  database-app:
+    image: mongo:latest
+    container_name: booking-mongodb
+    ports:
+      - "27017:27017" # Mở cổng để bạn vẫn dùng Compass ở máy thật kết nối vào được
+    volumes:
+      - mongo-data:/data/db # Giúp lưu lại dữ liệu ở máy thật, không bị mất khi tắt Docker
+    networks:
+      - booking-net
+    restart: always
+
+networks:
+  booking-net:
+    driver: bridge
+
+volumes:
+  mongo-data: # Khai báo ổ đĩa ảo để lưu trữ data dữ liệu khách sạn ổn định
