@@ -87,24 +87,6 @@ npm run dev
 
 ---
 
-## 📸 Screenshots
-
-### Home Page
-
-> Add your screenshot here
-
-![Home](images/home.png)
-
-### Hotel Detail
-
-![Detail](images/detail.png)
-
-### Booking Page
-
-![Booking](images/booking.png)
-
----
-
 ## 📌 API
 
 | Method | Endpoint | Description |
