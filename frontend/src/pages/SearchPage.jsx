@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { List, Map } from "lucide-react";
 import { removeAccents } from "@/lib/stringUtils";
 import api from "../lib/axios";
-import MapComponent from "@/components/home/MapComponent";
+import HotelResultsMap from "@/components/searchpage/HotelResultsMap";
 import HotelSidebar from "@/components/searchpage/HotelSidebar";
 
 const defaultLocation = {
@@ -19,6 +19,7 @@ const SearchPage = () => {
 
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState(null);
+  const [visibleHotels, setVisibleHotels] = useState([]);
   const [mobileView, setMobileView] = useState("list");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -58,7 +59,7 @@ const SearchPage = () => {
     fetchHotels();
   }, [lat, lng, name]);
 
-  const mappedHotels = hotels.filter(
+  const mappedHotels = visibleHotels.filter(
     (hotel) =>
       Number.isFinite(Number(hotel.lat)) &&
       Number.isFinite(Number(hotel.lng))
@@ -72,6 +73,15 @@ const SearchPage = () => {
     setSelectedHotel(hotel);
     setMobileView("map");
   };
+
+  const handleResultsChange = useCallback((results) => {
+    setVisibleHotels(results);
+    setSelectedHotel((current) =>
+      current && !results.some((hotel) => hotel._id === current._id)
+        ? null
+        : current
+    );
+  }, []);
 
   return (
     <div className="relative h-[calc(100vh-70px)] overflow-hidden bg-slate-100">
@@ -118,6 +128,7 @@ const SearchPage = () => {
             selectedHotel={selectedHotel}
             setSelectedHotel={handleHotelSelect}
             showHotelOnMap={showHotelOnMap}
+            onResultsChange={handleResultsChange}
           />
         </aside>
 
@@ -126,20 +137,23 @@ const SearchPage = () => {
             mobileView === "map" ? "block" : "hidden"
           }`}
         >
-          <MapComponent
+          <HotelResultsMap
             center={[lat, lng]}
             hotels={mappedHotels}
             selectedHotel={selectedHotel}
             onMarkerClick={handleHotelSelect}
           />
 
-          <div className="pointer-events-none absolute left-5 top-5 z-[500] hidden rounded-2xl border border-white/50 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-md md:block">
+          <div className="pointer-events-none absolute left-5 top-5 z-[500] hidden rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-lg md:block">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Map area
             </p>
 
             <p className="mt-1 font-bold text-slate-900">
               {displayName}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {mappedHotels.length} mapped {mappedHotels.length === 1 ? "property" : "properties"}
             </p>
           </div>
         </main>

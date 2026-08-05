@@ -1,22 +1,16 @@
 import React from "react";
-import { Building2, Home, Landmark } from "lucide-react";
+import { Building2, Landmark } from "lucide-react";
 
 const options = [
   {
     key: "Hotel",
     title: "Hotel",
-    desc: "Hotels, hostels, guesthouses, serviced apartments.",
+    desc: "Hotels, hostels, guesthouses, and other room-based stays.",
     icon: <Building2 size={28} />,
   },
   {
-    key: "Apartment",
-    title: "Apartment",
-    desc: "Fully furnished apartments and residential flats.",
-    icon: <Home size={28} />,
-  },
-  {
-    key: "Homestay",
-    title: "Homestay",
+    key: "HomeStay",
+    title: "HomeStay",
     desc: "Local stays, unique houses, and cozy rooms.",
     icon: <Landmark size={28} />,
   },
@@ -47,7 +41,7 @@ const Step0PropertyType = ({ next, update }) => {
         </div>
 
         {/* OPTIONS */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
           {options.map((item) => (
             <div
               key={item.key}

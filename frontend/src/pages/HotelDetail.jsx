@@ -3,11 +3,16 @@ import BookingSidebar from "@/components/hotel-details/BookingSidebar";
 import HotelGallery from "@/components/hotel-details/HotelGallery";
 import HotelHero from "@/components/hotel-details/HotelHero";
 import HotelInfo from "@/components/hotel-details/HotelInfo";
+import HotelReviews from "@/components/hotel-details/HotelReviews";
+import ImageLightbox from "@/components/hotel-details/ImageLightbox";
 import RoomList from "@/components/rooms/RoomList";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams} from "react-router-dom";
-import axios from "@/lib/axios";
 import api from "@/lib/axios";
+import {
+  getPropertyCoverUrl,
+  getPropertyGalleryUrls,
+} from "@/lib/imageUtils";
 
 const Hoteldetail = () => {
   const { id } = useParams();
@@ -15,13 +20,9 @@ const Hoteldetail = () => {
   const [loading, setLoading] = useState(true);
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
-  useEffect(() => {
-    fetchHotel();
-    fetchRooms();
-  }, [id]);
-
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       const res = await api.get(`/rooms/hotel/${id}`);
       const data = await res.data;
@@ -32,8 +33,9 @@ const Hoteldetail = () => {
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu phòng: ", error);
     }
-  }
-  const fetchHotel = async () => {
+  }, [id]);
+
+  const fetchHotel = useCallback(async () => {
     try {
       const res = await api.get(`/hotels/${id}`);
       const data = await res.data;
@@ -43,7 +45,12 @@ const Hoteldetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchHotel();
+    fetchRooms();
+  }, [fetchHotel, fetchRooms]);
 
   if (loading)
     return (
@@ -59,29 +66,38 @@ const Hoteldetail = () => {
       </div>
     );
 
-  const displayPhotos = hotel.photo?.length > 0
-    ? hotel.photo
-    : [
-        "https://images.unsplash.com/photo-1570214476695-19bd467e6f7a?q=80&w=2070",
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070",
-        "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2070",
-      ];
+  const coverUrl = getPropertyCoverUrl(hotel);
+  const galleryUrls = getPropertyGalleryUrls(hotel);
+  const allPhotoUrls = [coverUrl, ...galleryUrls].filter(Boolean);
 
-const photos = hotel.photo?.length > 0 ? hotel.photo : ["https://images.unsplash.com/photo-1570214476695-19bd467e6f7a"];
   return (
     <div className="mx-auto max-w-7xl px-8 pb-16 pt-8 sm:px-6 lg:px-8">
       <div className="overflow-hidden rounded-[2rem] bg-white shadow-xl ring-1 ring-slate-200">
-        <HotelHero hotel={hotel} mainPhoto={photos[0]} ratingValue={hotel.rating || 4.5} />
+        <HotelHero
+          hotel={hotel}
+          mainPhoto={coverUrl}
+          ratingValue={hotel.rating}
+          onPhotoClick={() => setLightboxIndex(0)}
+        />
 
         <div className="grid gap-6 px-4 py-8 sm:grid-cols-[1.7fr_0.95fr] sm:px-10">
           <div className="space-y-6">
-            <HotelGallery photos={photos.slice(1, 4)} />
+            <HotelGallery
+              photos={galleryUrls.slice(0, 4)}
+              onPhotoClick={(index) => setLightboxIndex(index + 1)}
+            />
             <RoomList
             rooms = {rooms}
             selectedRoom={selectedRoom}
             onSelectRoom={(room) => setSelectedRoom(room)}
             />
             <HotelInfo hotel={hotel} />
+            <HotelReviews
+              hotel={hotel}
+              onSummaryChange={(summary) =>
+                setHotel((current) => ({ ...current, ...summary }))
+              }
+            />
           </div>
           <BookingSidebar 
           hotel={{
@@ -94,6 +110,14 @@ const photos = hotel.photo?.length > 0 ? hotel.photo : ["https://images.unsplash
       <div className="pt-8 px-4 sm:px-10">
         <Features />
       </div>
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={allPhotoUrls}
+          currentIndex={lightboxIndex}
+          onChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   );
 };

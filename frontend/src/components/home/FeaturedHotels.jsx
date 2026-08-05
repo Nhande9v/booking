@@ -5,18 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
+import { getPropertyCoverUrl } from "@/lib/imageUtils";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price || 0);
 
-const getDisplayPhoto = (photo) => {
-  if (Array.isArray(photo) && photo.length) return photo[0];
-  if (typeof photo === "string") return photo.split(",")[0];
-  return "/hotel.jpg";
-};
-
 const FeaturedHotels = ({ hotels = [], loading = false }) => {
   const navigate = useNavigate();
+  const featuredHotels = hotels.filter((hotel) => hotel.featured === true);
 
   if (loading) {
     return (
@@ -33,10 +29,10 @@ const FeaturedHotels = ({ hotels = [], loading = false }) => {
     );
   }
 
-  if (!hotels.length) return null;
+  if (!featuredHotels.length) return null;
 
-  const mainHotel = hotels[0];
-  const sideHotels = hotels.slice(1, 3);
+  const mainHotel = featuredHotels[0];
+  const sideHotels = featuredHotels.slice(1, 3);
 
   return (
     <motion.section
@@ -83,7 +79,7 @@ const FeaturedHotels = ({ hotels = [], loading = false }) => {
             >
               <div className="relative h-[600px] w-full overflow-hidden rounded-[2rem] shadow-2xl shadow-blue-900/10">
                 <img
-                  src={getDisplayPhoto(mainHotel.photo)}
+                  src={getPropertyCoverUrl(mainHotel)}
                   alt={mainHotel.name}
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110"
                 />
@@ -136,7 +132,7 @@ const FeaturedHotels = ({ hotels = [], loading = false }) => {
               >
                 <div className="relative h-[220px] overflow-hidden rounded-[1.5rem] shadow-lg transition-all duration-500 group-hover:shadow-blue-500/10">
                   <img
-                    src={getDisplayPhoto(hotel.photo)}
+                    src={getPropertyCoverUrl(hotel)}
                     alt={hotel.name}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

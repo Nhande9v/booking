@@ -1,5 +1,6 @@
 import React from "react";
-import { Building2, Home, Landmark } from "lucide-react";
+import { Building2, Landmark } from "lucide-react";
+import PropertyLocationPicker from "@/components/host/PropertyLocationPicker";
 
 /* =========================
    INPUT COMPONENT
@@ -53,6 +54,11 @@ const Step1Info = ({ data, update, next, back }) => {
       return;
     }
 
+    if (name === "city" || name === "district" || name === "address") {
+      update({ [name]: value, lat: null, lng: null });
+      return;
+    }
+
     update({ [name]: value });
   };
 
@@ -70,6 +76,11 @@ const Step1Info = ({ data, update, next, back }) => {
       return;
     }
 
+    if (!Number.isFinite(Number(data.lat)) || !Number.isFinite(Number(data.lng))) {
+      alert("Please find and confirm the property location on the map.");
+      return;
+    }
+
     next();
   };
 
@@ -77,8 +88,7 @@ const Step1Info = ({ data, update, next, back }) => {
   const getPropertyIcon = (type) => {
     switch (type) {
       case "Hotel": return <Building2 size={18} className="text-blue-600" />;
-      case "Apartment": return <Home size={18} className="text-blue-600" />;
-      case "Homestay": return <Landmark size={18} className="text-blue-600" />;
+      case "HomeStay": return <Landmark size={18} className="text-blue-600" />;
       default: return null;
     }
   };
@@ -122,7 +132,7 @@ const Step1Info = ({ data, update, next, back }) => {
               name="name"
               value={data.name}
               onChange={handleChange}
-              placeholder="e.g. Azura Sea View Hotel"
+              placeholder="e.g. ALaura Sea View Hotel"
               required
             />
           </div>
@@ -185,6 +195,15 @@ const Step1Info = ({ data, update, next, back }) => {
           onChange={handleChange}
           placeholder="Street, ward, district..."
           required
+        />
+
+        <PropertyLocationPicker
+          city={data.city}
+          district={data.district}
+          address={data.address}
+          lat={data.lat}
+          lng={data.lng}
+          onChange={update}
         />
       </div>
 

@@ -10,7 +10,7 @@ const sendEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: '"Azura Haven Support" <support@azurahaven.com>',
+    from: '"ALaura Haven Support" <support@ALaura.com>',
     to: options.email,
     subject: options.subject,
     html: options.html, // Dùng HTML để giao diện mail đẹp hơn

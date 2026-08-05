@@ -56,7 +56,7 @@ const Login = () => {
         payload: res.data,
       });
 
-      toast.success("Welcome back to Azura Haven! 🎉");
+      toast.success("Welcome back to ALaura Haven! 🎉");
 
       // Chuyển hướng sau 1 giây để người dùng kịp thấy thông báo thành công
       setTimeout(() => navigate("/"), 1000);
@@ -111,7 +111,7 @@ const Login = () => {
               </div>
             </div>
             <div className="text-[10px] text-slate-600 font-medium tracking-widest uppercase">
-              © 2026 Azura Haven Co.
+              © 2026 ALaura Haven Co.
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@ const Login = () => {
             {/* Link to Register */}
             <div className="mt-8 text-center">
               <p className="text-sm font-medium text-slate-500">
-                New to Azura Haven?{" "}
+                New to ALaura Haven?{" "}
                 <Link
                   to="/register"
                   className="text-indigo-600 font-bold hover:underline underline-offset-4"

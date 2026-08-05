@@ -6,7 +6,7 @@ import { User, Mail, Lock, CheckCircle2, ArrowRight } from "lucide-react"; // Th
 
 const Register = () => {
   const [info, setInfo] = useState({ username: "", email: "", password: "" });
-  const [errors, setErrors] = useState({});
+  const [errors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -65,7 +65,7 @@ const Register = () => {
           </div>
 
           <div className="relative z-10 text-xs font-medium tracking-widest uppercase opacity-40">
-            Azura Haven Luxury Edition
+            ALaura Haven Luxury Edition
           </div>
         </div>
 

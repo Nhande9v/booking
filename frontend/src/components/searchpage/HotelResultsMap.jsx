@@ -7,8 +7,10 @@ import {
   useMap,
 } from "react-leaflet";
 import { MapPin, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { getPropertyCoverUrl } from "@/lib/imageUtils";
 
 const createMarkerIcon = (active = false) =>
   L.divIcon({
@@ -44,12 +46,6 @@ const ActiveIcon = createMarkerIcon(true);
 
 const formatPrice = (price) =>
   Number(price || 0).toLocaleString("vi-VN");
-
-const getPhoto = (photo) => {
-  if (Array.isArray(photo) && photo.length) return photo[0];
-  if (typeof photo === "string") return photo.split(",")[0];
-  return "/hotel.jpg";
-};
 
 const FlyToHotel = ({ hotel }) => {
   const map = useMap();
@@ -94,7 +90,7 @@ const ResizeMap = () => {
   return null;
 };
 
-const MapComponent = ({
+const HotelResultsMap = ({
   center,
   hotels = [],
   selectedHotel,
@@ -141,7 +137,7 @@ const MapComponent = ({
                 <div className="w-[220px] bg-white p-2.5 font-sans">
                   <div className="flex gap-3">
                     <img
-                      src={getPhoto(hotel.photo)}
+                      src={getPropertyCoverUrl(hotel)}
                       alt={hotel.name}
                       className="h-20 w-20 shrink-0 rounded-xl object-cover"
                     />
@@ -185,6 +181,12 @@ const MapComponent = ({
                       </span>
                     </span>
                   </div>
+                  <Link
+                    to={`/hotel/${hotel._id}`}
+                    className="mt-2 flex w-full items-center justify-center rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-blue-600"
+                  >
+                    View details
+                  </Link>
                 </div>
               </Popup>
             </Marker>
@@ -195,4 +197,4 @@ const MapComponent = ({
   );
 };
 
-export default MapComponent;
+export default HotelResultsMap;

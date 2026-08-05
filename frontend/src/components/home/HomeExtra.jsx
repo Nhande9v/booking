@@ -22,7 +22,7 @@ const benefits = [
   {
     title: "Multiple Stay Options",
     description:
-      "Explore hotels, apartments, and homestays for different types of journeys.",
+      "Explore hotels and homestays for different types of journeys.",
     icon: BedDouble,
   },
 ];

@@ -2,23 +2,26 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Step0PropertyType from "../components/host/AddHotelSteps/Step0PropertyType";
 import Step1Info from "../components/host/AddHotelSteps/Step1Info";
-// import Step2Amenities from "../components/host/AddHotelSteps/Step2Amenities";
-// import Step3Policies from "../components/host/AddHotelSteps/Step3Policies";
-// import Step4Photos from "../components/host/AddHotelSteps/Step4Photos";
+import Step2Amenities from "../components/host/AddHotelSteps/Step2Amenities";
+import Step3Policies from "../components/host/AddHotelSteps/Step3Policies";
+import Step4Photos from "../components/host/AddHotelSteps/Step4Photos";
 import api from "@/lib/axios";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const CreateHotel = () => {
   const [step, setStep] = useState(0);
-  const totalSteps = 4;
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "", type: "Hotel", city: "", address: "", price: "",
+    name: "", type: "Hotel", city: "", district: "", address: "", price: "",
+    lat: null, lng: null,
     description: "", amenities: [],
     facilities: { hasBreakfast: false, parking: "None" },
     policies: { allowChildren: true, allowPets: false },
-    photo: []
+    coverPhoto: null,
+    photos: [],
   });
 
   const handleUpdate = (newData) => setFormData(prev => ({ ...prev, ...newData }));
@@ -30,11 +33,21 @@ const CreateHotel = () => {
     try {
       setLoading(true);
       // Gọi API POST /hotels mà bạn đã viết ở Backend
-      await api.post("/hotels", formData);
-      toast.success("🎉 Property published successfully!");
-      // Chuyển hướng về trang quản lý của Host
-    } catch (err) {
-      toast.error("Failed to publish property.");
+      const response = await api.post("/hotels", formData);
+      toast.success("Đã lưu bản nháp. Hãy thêm các loại phòng.");
+      navigate(`/host/hotels/${response.data._id}/rooms`);
+    } catch (error) {
+      console.error("Publish property failed:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to publish property."
+      );
     } finally {
       setLoading(false);
     }

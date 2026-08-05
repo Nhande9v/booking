@@ -3,28 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Tag, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { getRoomCoverUrl } from "@/lib/imageUtils";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price || 0);
 
-const getPhoto = (photo) => {
-  if (Array.isArray(photo) && photo.length) return photo[0];
-  if (typeof photo === "string") return photo.split(",")[0];
-  return "/hotel.jpg";
-};
-
-const DiscountSection = ({ hotels = [], loading = false }) => {
+const DiscountSection = ({ rooms = [], loading = false }) => {
   const navigate = useNavigate();
 
-  const discountedHotels = hotels
+  const discountedRooms = rooms
     .filter(
-      (hotel) =>
-        Number(hotel.oldPrice) > Number(hotel.price) &&
-        Number(hotel.price) > 0
+      (room) =>
+        room.hotelId &&
+        Number(room.oldPrice) > Number(room.price) &&
+        Number(room.price) > 0
     )
     .slice(0, 4);
 
-  if (loading || !discountedHotels.length) return null;
+  if (loading || !discountedRooms.length) return null;
 
   const container = {
     hidden: {},
@@ -64,7 +60,7 @@ const DiscountSection = ({ hotels = [], loading = false }) => {
             </h2>
 
             <p className="mt-3 max-w-xl leading-7 text-slate-500">
-              Explore properties currently available at a lower price.
+              Explore room offers currently available at a lower nightly rate.
             </p>
           </div>
 
@@ -89,23 +85,23 @@ const DiscountSection = ({ hotels = [], loading = false }) => {
           viewport={{ once: true }}
           className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"
         >
-          {discountedHotels.map((hotel) => {
+          {discountedRooms.map((room) => {
             const discountPercent = Math.round(
-              ((hotel.oldPrice - hotel.price) / hotel.oldPrice) * 100
+              ((room.oldPrice - room.price) / room.oldPrice) * 100
             );
 
             return (
               <motion.article
-                key={hotel._id}
+                key={room._id}
                 variants={item}
                 whileHover={{ y: -8 }}
-                onClick={() => navigate(`/hotel/${hotel._id}`)}
+                onClick={() => navigate(`/room/${room._id}`)}
                 className="group cursor-pointer overflow-hidden rounded-3xl bg-white shadow-md transition hover:shadow-xl"
               >
                 <div className="relative h-60 overflow-hidden">
                   <img
-                    src={getPhoto(hotel.photo)}
-                    alt={hotel.name}
+                    src={getRoomCoverUrl(room)}
+                    alt={room.title}
                     className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
                   />
 
@@ -118,20 +114,20 @@ const DiscountSection = ({ hotels = [], loading = false }) => {
 
                 <div className="space-y-2 p-5">
                   <h3 className="line-clamp-1 text-lg font-semibold text-slate-900 transition group-hover:text-blue-600">
-                    {hotel.name}
+                    {room.title}
                   </h3>
 
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    {hotel.city}
+                    {room.hotelId.name} · {room.hotelId.city}
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2">
                     <span className="text-xl font-bold text-blue-600">
-                      {formatPrice(hotel.price)}₫
+                      {formatPrice(room.price)}₫
                     </span>
 
                     <span className="text-sm text-slate-400 line-through">
-                      {formatPrice(hotel.oldPrice)}₫
+                      {formatPrice(room.oldPrice)}₫
                     </span>
                   </div>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { getRoomCoverUrl } from "@/lib/imageUtils";
 const RoomList = ({ rooms, selectedRoom, onSelectRoom }) => {
     if (!rooms || !Array.isArray(rooms) || rooms.length === 0) {
     return (<div className="text-slate-500 py-10 text-center italic">
@@ -25,7 +26,7 @@ return(
                 <Link to={`/room/${room._id}`} className="shrink-0">
                 <div className="relative h-24 w-32 overflow-hidden rounded-2xl shadow-inner">
                 <img
-                  src={room.photo?.[0] || "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=300"}
+                  src={getRoomCoverUrl(room)}
                   alt={room.title}
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
                 />

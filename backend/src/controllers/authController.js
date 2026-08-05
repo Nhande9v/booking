@@ -92,8 +92,12 @@ export const login = async (req, res) => {
     if (!isPasswordCorrect) return res.status(400).json("Wrong password or username!");
 
     const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET
+   {
+    id: user._id.toString(),
+    role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
     );
 
     const { password, isAdmin, ...otherDetails } = user._doc;
@@ -101,7 +105,7 @@ export const login = async (req, res) => {
       httpOnly: true, 
     })
     .status(200)
-    .json({ details: { ...otherDetails }, isAdmin });
+    .json({ token, details: { ...otherDetails }, isAdmin });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -126,7 +130,7 @@ export const forgotPassword = async (req, res, next) => {
     const htmlContent = `
       <div style="max-width: 600px; margin: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
         <div style="background-color: #4f46e5; padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0;">Azura Haven</h1>
+          <h1 style="color: white; margin: 0;">ALaura</h1>
         </div>
         <div style="padding: 40px; color: #1e293b; line-height: 1.6;">
           <h2 style="font-weight: 800;">Password Reset Request</h2>
@@ -142,7 +146,7 @@ export const forgotPassword = async (req, res, next) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: "Azura Haven - Password Reset",
+        subject: "ALaura Haven - Password Reset",
         html: htmlContent,
       });
 
