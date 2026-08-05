@@ -125,7 +125,10 @@ export const getRoomById = async (req, res, next) => {
       });
     }
 
-    return res.status(200).json(room);
+    return res.status(200).json({
+      ...room.toObject(),
+      propertyBookingEnabled: hotel.bookingEnabled !== false,
+    });
   } catch (error) {
     return next(error);
   }
@@ -192,6 +195,31 @@ export const updateRoomPricing = async (req, res, next) => {
     room.price = req.body.price;
     room.oldPrice = req.body.oldPrice ?? null;
     applyDiscount(room);
+    await room.save();
+    return res.status(200).json(room);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const setRoomBookingEnabled = async (req, res, next) => {
+  try {
+    if (typeof req.body.bookingEnabled !== "boolean") {
+      return res.status(400).json({ message: "bookingEnabled must be a boolean." });
+    }
+
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ message: "Room type not found." });
+    const hotel = await Hotel.findById(room.hotelId);
+    if (!hotel) return res.status(404).json({ message: "Property not found." });
+    if (!canManage(hotel, req.user)) {
+      return res.status(403).json({ message: "You cannot manage booking availability for this room." });
+    }
+    if (hotel.status !== "active") {
+      return res.status(409).json({ message: "Room booking availability can only change for active properties." });
+    }
+
+    room.bookingEnabled = req.body.bookingEnabled;
     await room.save();
     return res.status(200).json(room);
   } catch (error) {

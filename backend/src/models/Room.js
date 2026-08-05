@@ -9,6 +9,7 @@ const RoomSchema = new mongoose.Schema(
     isDiscounted: { type: Boolean, default: false },
     maxPeople: { type: Number, required: true },
     totalRooms: { type: Number, required: true, min: 1, default: 1 },
+    bookingEnabled: { type: Boolean, default: true },
     desc: { type: String, required: true },
     photo: { type: [String], default: [] },
     coverPhoto: { type: imageSchema, default: null },

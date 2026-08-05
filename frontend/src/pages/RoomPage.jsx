@@ -1,14 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Users, Wifi, Wind, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarDays, Users, Wifi, Wind } from "lucide-react";
+import { toast } from "sonner";
+import { AuthContext } from "@/context/AuthContext";
 import api from "../lib/axios";
 import { getRoomCoverUrl, getRoomGalleryUrls } from "@/lib/imageUtils";
+
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const RoomPage = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    checkIn: "",
+    checkOut: "",
+    guests: 1,
+    roomQuantity: 1,
+  });
+
+  const today = useMemo(() => formatLocalDate(new Date()), []);
+
+  const estimatedNights = useMemo(() => {
+    if (!bookingForm.checkIn || !bookingForm.checkOut) return 0;
+    const checkIn = new Date(`${bookingForm.checkIn}T00:00:00Z`);
+    const checkOut = new Date(`${bookingForm.checkOut}T00:00:00Z`);
+    return Math.max(Math.round((checkOut - checkIn) / 86400000), 0);
+  }, [bookingForm.checkIn, bookingForm.checkOut]);
+
+  const estimatedTotal =
+    Number(room?.price || 0) *
+    estimatedNights *
+    Number(bookingForm.roomQuantity || 0);
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -24,11 +56,81 @@ const RoomPage = () => {
     fetchRoom();
   }, [roomId]);
 
+  const updateBookingForm = (event) => {
+    const { name, value } = event.target;
+    setBookingForm((current) => {
+      if (name === "roomQuantity") {
+        const roomQuantity = Math.min(
+          Math.max(Number(value) || 1, 1),
+          room.totalRooms
+        );
+        const maximumGuests = room.maxPeople * roomQuantity;
+
+        return {
+          ...current,
+          roomQuantity,
+          guests: Math.min(Number(current.guests) || 1, maximumGuests),
+        };
+      }
+
+      if (name === "guests") {
+        const maximumGuests =
+          room.maxPeople * Number(current.roomQuantity || 1);
+        return {
+          ...current,
+          guests: Math.min(Math.max(Number(value) || 1, 1), maximumGuests),
+        };
+      }
+
+      return { ...current, [name]: value };
+    });
+  };
+
+  const submitBooking = async (event) => {
+    event.preventDefault();
+
+    if (!user) {
+      toast.error("Please sign in before reserving a room.");
+      navigate("/login");
+      return;
+    }
+
+    const role = user?.details?.role || user?.role;
+    if (role !== "user") {
+      toast.error("Please use a guest account to reserve a room.");
+      return;
+    }
+
+    if (!bookingForm.checkIn || !bookingForm.checkOut || estimatedNights < 1) {
+      toast.error("Choose a valid check-in and check-out date.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await api.post("/bookings", {
+        roomId: room._id,
+        checkIn: bookingForm.checkIn,
+        checkOut: bookingForm.checkOut,
+        guests: Number(bookingForm.guests),
+        roomQuantity: Number(bookingForm.roomQuantity),
+      });
+      toast.success("Your room is being held for 15 minutes.");
+      navigate("/bookings");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to create this booking.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) return <div className="text-center py-20 text-slate-500 font-medium">Loading room details...</div>;
   if (!room) return <div className="text-center py-20 text-red-500 font-bold">Room not found!</div>;
 
   const coverUrl = getRoomCoverUrl(room);
   const galleryUrls = getRoomGalleryUrls(room);
+  const acceptingBookings =
+    room.bookingEnabled !== false && room.propertyBookingEnabled !== false;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
@@ -106,15 +208,100 @@ const RoomPage = () => {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <button className="w-full rounded-2xl bg-indigo-600 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition active:scale-95">
-                   BOOK NOW
-                </button>
-                
-                <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-600 uppercase">
-                  <ShieldCheck size={16} /> 100% Secure Payment
+              {!acceptingBookings && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+                  This room is not currently accepting bookings.
                 </div>
-              </div>
+              )}
+              <form className="space-y-4" onSubmit={submitBooking}>
+                <fieldset disabled={!acceptingBookings || submitting} className="space-y-4 disabled:opacity-60">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="space-y-1.5 text-sm font-bold text-slate-700">
+                    Check-in
+                    <input
+                      type="date"
+                      name="checkIn"
+                      min={today}
+                      value={bookingForm.checkIn}
+                      onChange={updateBookingForm}
+                      required
+                      className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                  <label className="space-y-1.5 text-sm font-bold text-slate-700">
+                    Check-out
+                    <input
+                      type="date"
+                      name="checkOut"
+                      min={bookingForm.checkIn || today}
+                      value={bookingForm.checkOut}
+                      onChange={updateBookingForm}
+                      required
+                      className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="space-y-1.5 text-sm font-bold text-slate-700">
+                    Guests
+                    <span className="ml-1 text-xs font-medium text-slate-400">
+                      (max {room.maxPeople * Number(bookingForm.roomQuantity || 1)})
+                    </span>
+                    <input
+                      type="number"
+                      name="guests"
+                      min="1"
+                      max={room.maxPeople * Number(bookingForm.roomQuantity || 1)}
+                      value={bookingForm.guests}
+                      onChange={updateBookingForm}
+                      required
+                      className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                  <label className="space-y-1.5 text-sm font-bold text-slate-700">
+                    Rooms
+                    <span className="ml-1 text-xs font-medium text-slate-400">
+                      (max {room.totalRooms})
+                    </span>
+                    <input
+                      type="number"
+                      name="roomQuantity"
+                      min="1"
+                      max={room.totalRooms}
+                      value={bookingForm.roomQuantity}
+                      onChange={updateBookingForm}
+                      required
+                      className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between border-y border-slate-100 py-4">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+                    <CalendarDays size={17} />
+                    {estimatedNights || 0} {estimatedNights === 1 ? "night" : "nights"}
+                  </span>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-slate-400">Estimated total</p>
+                    <p className="text-xl font-black text-slate-900">
+                      {estimatedTotal.toLocaleString("vi-VN")}₫
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!acceptingBookings || submitting}
+                  className="min-h-12 w-full rounded-lg bg-blue-600 px-5 text-base font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {submitting ? "Reserving..." : "Reserve room"}
+                </button>
+                <p className="text-center text-xs leading-5 text-slate-500">
+                  Your room is held for 15 minutes. The final price is confirmed by the server.
+                </p>
+                </fieldset>
+              </form>
 
               <hr className="my-8 border-slate-100" />
               

@@ -441,6 +441,29 @@ export const setHotelFeatured = async (req, res, next) => {
   }
 };
 
+export const setHotelBookingEnabled = async (req, res, next) => {
+  try {
+    if (typeof req.body.bookingEnabled !== "boolean") {
+      return res.status(400).json({ message: "bookingEnabled must be a boolean." });
+    }
+
+    const hotel = await Hotel.findById(req.params.id);
+    if (!hotel) return res.status(404).json({ message: "Property not found." });
+    if (!canManageHotel(hotel, req.user)) {
+      return res.status(403).json({ message: "You cannot manage booking availability for this property." });
+    }
+    if (hotel.status !== "active") {
+      return res.status(409).json({ message: "Only active properties can accept bookings." });
+    }
+
+    hotel.bookingEnabled = req.body.bookingEnabled;
+    await hotel.save();
+    return res.status(200).json(hotel);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const refreshHotelCoordinates = async (req, res, next) => {
   try {
     const hotel = await Hotel.findById(req.params.id);

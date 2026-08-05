@@ -49,6 +49,7 @@ const hotelSchema = new mongoose.Schema({
     allowPets: { type: Boolean, default: false }
   },
   featured: { type: Boolean, default: false },
+  bookingEnabled: { type: Boolean, default: true },
 
   lat: { type: Number },
   lng: { type: Number},
