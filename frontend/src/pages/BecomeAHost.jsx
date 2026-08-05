@@ -80,7 +80,7 @@ const BecomeAHost = () => {
 
       toast.success("🎉 You're now a Host!");
       navigate("/");
-    } catch (err) {
+    } catch {
       toast.error("Something went wrong.");
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ const BecomeAHost = () => {
       case 1:
         return (
           <div className="space-y-4">
-            <Input label="Property Name" name="businessName" value={formData.businessName} onChange={handleChange} placeholder="e.g. Azura Homestay" />
+            <Input label="Property Name" name="businessName" value={formData.businessName} onChange={handleChange} placeholder="e.g. ALaura Homestay" />
             <Input label="Phone Number" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="+84..." />
             <Input label="Full Address" name="address" value={formData.address} onChange={handleChange} placeholder="Street, district..." />
           </div>

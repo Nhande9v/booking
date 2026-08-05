@@ -14,6 +14,10 @@ import ResetPassword from "./pages/ResetPassword";
 import AccountSettings from "./pages/AccountSettings";
 import BecomeAHost from "./pages/BecomeAHost";
 import CreateHotel from "./pages/CreateHotel";
+import HostDashboard from "./pages/HostDashboard";
+import HostHotelRooms from "./pages/HostHotelRooms";
+import AdminHotelReview from "./pages/AdminHotelReview";
+import RoleRoute from "./components/auth/RoleRoute";
 
 function App() {
   return (
@@ -34,7 +38,10 @@ function App() {
             <Route path="/room/:roomId" element={<RoomPage/>}/>
             <Route path="*" element={<NotFound />} />
             <Route path="/become-a-host" element={<BecomeAHost />} />
-            <Route path="/create-hotel" element={<CreateHotel />} />
+            <Route path="/create-hotel" element={<RoleRoute roles={["provider", "admin"]}><CreateHotel /></RoleRoute>} />
+            <Route path="/host/dashboard" element={<RoleRoute roles={["provider", "admin"]}><HostDashboard /></RoleRoute>} />
+            <Route path="/host/hotels/:hotelId/rooms" element={<RoleRoute roles={["provider", "admin"]}><HostHotelRooms /></RoleRoute>} />
+            <Route path="/admin/hotels/review" element={<RoleRoute roles={["admin"]}><AdminHotelReview /></RoleRoute>} />
           </Routes>
         </div>
       </BrowserRouter>

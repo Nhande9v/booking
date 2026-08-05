@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Users, Wifi, Wind, ShieldCheck } from "lucide-react";
 import api from "../lib/axios";
+import { getRoomCoverUrl, getRoomGalleryUrls } from "@/lib/imageUtils";
 const RoomPage = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -26,12 +27,15 @@ const RoomPage = () => {
   if (loading) return <div className="text-center py-20 text-slate-500 font-medium">Loading room details...</div>;
   if (!room) return <div className="text-center py-20 text-red-500 font-bold">Room not found!</div>;
 
+  const coverUrl = getRoomCoverUrl(room);
+  const galleryUrls = getRoomGalleryUrls(room);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       {/* 1. NÚT BACK VÀ HEADER ẢNH */}
       <div className="relative h-[50vh] w-full overflow-hidden">
         <img 
-          src={room.photo?.[0] || "https://images.unsplash.com/photo-1611892440504-42a792e24d32"} 
+          src={coverUrl} 
           className="h-full w-full object-cover transition duration-700 hover:scale-105" 
           alt={room.title}
         />
@@ -72,7 +76,7 @@ const RoomPage = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {room.photo?.slice(1).map((img, index) => (
+              {galleryUrls.map((img, index) => (
                 <img 
                   key={index} 
                   src={img} 
@@ -90,6 +94,16 @@ const RoomPage = () => {
                 <h2 className="text-4xl font-black text-indigo-600 mt-2">
                   {room.price?.toLocaleString("vi-VN")}₫
                 </h2>
+                {room.isDiscounted && Number(room.oldPrice) > Number(room.price) && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-slate-400 line-through">
+                      {Number(room.oldPrice).toLocaleString("vi-VN")}₫
+                    </span>
+                    <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-600">
+                      Save {Math.round(((room.oldPrice - room.price) / room.oldPrice) * 100)}%
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">

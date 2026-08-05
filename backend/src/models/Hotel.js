@@ -1,21 +1,28 @@
 import mongoose from "mongoose";
+import imageSchema from "./schemas/Image.js";
 
 const hotelSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   type: { 
     type: String, 
     required: true, 
-    enum: ['Hotel', 'HomeStay', 'Apartment'], 
+    enum: ['Hotel', 'HomeStay'], 
     default: 'Hotel'
   },
   city: { type: String, required: true, trim: true },
+  district: { type: String, default: "", trim: true },
   address: { type: String, required: true, trim: true },
   price: { type: Number, required: true },
-  oldPrice: { type: Number, default: null },
-  isDiscounted: { type: Boolean, default: false },
-  rating: { type: Number, min: 0, max: 5 },
+  rating: { type: Number, min: 1, max: 5 },
+  reviewCount: { type: Number, min: 0, default: 0 },
   description: { type: String,  trim: true },
   photo: { type: [String], default: [] },
+  coverPhoto: { type: imageSchema, default: null},
+  photos: { type: [imageSchema], default: [], validate: {
+    validator: (images) => images.length <= 10,
+    message: "A property can have up to 10 photos",
+    },  
+  },
   languages: { type: [String], default: ["English", "Vietnamese"] },
   amenities: {
     type: [String], 
@@ -48,13 +55,14 @@ const hotelSchema = new mongoose.Schema({
 
   owner: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "user", 
+    ref: "User", 
     required: true 
   },
   status: { 
     type: String, 
-    enum: ['pending', 'active', 'rejected'], 
-    default: 'pending' 
-  }
+    enum: ['draft', 'pending', 'active', 'rejected'], 
+    default: 'draft' 
+  },
+  rejectionReason: { type: String, default: "", trim: true }
 }, { timestamps: true });
 export default mongoose.model("hotels", hotelSchema);

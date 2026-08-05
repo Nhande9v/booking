@@ -1,135 +1,145 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Tag, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
-const DiscountSection = ({ hotels, loading }) => {
-    const discountedHotels = hotels?.filter(h => h.oldPrice > h.price).slice(0, 4) || [];
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Tag, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { getRoomCoverUrl } from "@/lib/imageUtils";
 
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat('vi-VN').format(price);
-    };
+const formatPrice = (price) =>
+  new Intl.NumberFormat("vi-VN").format(price || 0);
 
-    if (loading || discountedHotels.length === 0) return null;
+const DiscountSection = ({ rooms = [], loading = false }) => {
+  const navigate = useNavigate();
 
-     const container = {
-        hidden: {},
-        show: {
-            transition: {
-                staggerChildren: 0.15
-            }
-        }
-    };
+  const discountedRooms = rooms
+    .filter(
+      (room) =>
+        room.hotelId &&
+        Number(room.oldPrice) > Number(room.price) &&
+        Number(room.price) > 0
+    )
+    .slice(0, 4);
 
-    const item = {
-        hidden: { opacity: 0, y: 40 },
-        show: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.6,
-                ease: "easeOut"
-            }
-        }
-    };
-    return (
-        <motion.section
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="py-24 px-6 bg-gradient-to-b from-white to-slate-50"
+  if (loading || !discountedRooms.length) return null;
+
+  const container = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: 0.15 },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 35 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.7 }}
+      className="bg-gradient-to-b from-white to-slate-50 px-6 py-24"
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-14 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-red-500">
+              <Tag size={14} />
+              Current offers
+            </div>
+
+            <h2 className="text-4xl font-extrabold text-slate-900 md:text-5xl">
+              Save on your{" "}
+              <span className="text-red-500">next stay</span>
+            </h2>
+
+            <p className="mt-3 max-w-xl leading-7 text-slate-500">
+              Explore room offers currently available at a lower nightly rate.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/search")}
+            className="group flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-blue-600"
+          >
+            View all properties
+
+            <ArrowRight
+              size={16}
+              className="transition-transform group-hover:translate-x-1"
+            />
+          </button>
+        </div>
+
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"
         >
-            <div className="max-w-7xl mx-auto">
+          {discountedRooms.map((room) => {
+            const discountPercent = Math.round(
+              ((room.oldPrice - room.price) / room.oldPrice) * 100
+            );
 
-                {/* Header */}
-                <div className="flex justify-between items-end mb-14">
-                    <div>
-                        <div className="flex items-center gap-2 text-red-500 font-semibold text-xs uppercase tracking-widest mb-2">
-                            <Tag size={14} />
-                            Limited Time Offers
-                        </div>
+            return (
+              <motion.article
+                key={room._id}
+                variants={item}
+                whileHover={{ y: -8 }}
+                onClick={() => navigate(`/room/${room._id}`)}
+                className="group cursor-pointer overflow-hidden rounded-3xl bg-white shadow-md transition hover:shadow-xl"
+              >
+                <div className="relative h-60 overflow-hidden">
+                  <img
+                    src={getRoomCoverUrl(room)}
+                    alt={room.title}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  />
 
-                        <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900">
-                            Exclusive <span className="text-red-500">Deals</span>
-                        </h2>
-                    </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-                    <button className="group flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-black transition">
-                        View All
-                        <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-                    </button>
+                  <Badge className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1 font-bold text-white shadow-md">
+                    Save {discountPercent}%
+                  </Badge>
                 </div>
 
-                {/* Grid */}
-                <motion.div
-                    variants={container}
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-                >
+                <div className="space-y-2 p-5">
+                  <h3 className="line-clamp-1 text-lg font-semibold text-slate-900 transition group-hover:text-blue-600">
+                    {room.title}
+                  </h3>
 
-                    {discountedHotels.map((hotel) => {
-                        const discountPercent = Math.round(
-                            ((hotel.oldPrice - hotel.price) / hotel.oldPrice) * 100
-                        );
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {room.hotelId.name} · {room.hotelId.city}
+                  </p>
 
-                        return (
-                            <motion.div
-                                key={hotel._id}
-                                variants={item}
-                                whileHover={{ y: -8, scale: 1.02 }}
-                                className="group rounded-3xl overflow-hidden bg-white shadow-md hover:shadow-xl transition"
-                            >
-                                {/* Image */}
-                                <div className="relative h-60 overflow-hidden">
-                                    <img
-                                        src={Array.isArray(hotel.photo)
-                                            ? hotel.photo[0]
-                                            : hotel.photo?.split(',')[0]}
-                                        alt={hotel.name}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
-                                    />
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatPrice(room.price)}₫
+                    </span>
 
-                                    {/* Gradient overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-80" />
+                    <span className="text-sm text-slate-400 line-through">
+                      {formatPrice(room.oldPrice)}₫
+                    </span>
+                  </div>
 
-                                    {/* Discount badge */}
-                                    <div className="absolute top-4 left-4">
-                                        <Badge className="bg-red-500 text-white font-bold px-3 py-1 rounded-full shadow-md">
-                                            -{discountPercent}%
-                                        </Badge>
-                                    </div>
-                                </div>
-
-                                {/* Content */}
-                                <div className="p-4 space-y-2">
-                                    <h3 className="font-semibold text-lg text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
-                                        {hotel.name}
-                                    </h3>
-
-                                    <p className="text-xs text-slate-400 uppercase tracking-wide">
-                                        {hotel.city}
-                                    </p>
-
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <span className="text-xl font-bold text-slate-900">
-                                            {formatPrice(hotel.price)}đ
-                                        </span>
-
-                                        <span className="text-sm text-slate-400 line-through">
-                                            {formatPrice(hotel.oldPrice)}đ
-                                        </span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-
-                </motion.div>
-            </div>
-        </motion.section>
-    );
+                  <p className="text-xs text-slate-400">per night</p>
+                </div>
+              </motion.article>
+            );
+          })}
+        </motion.div>
+      </div>
+    </motion.section>
+  );
 };
 
 export default DiscountSection;

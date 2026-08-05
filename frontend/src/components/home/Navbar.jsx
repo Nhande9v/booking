@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Globe,  Menu, LogOut, ChevronDown, Briefcase, Settings, UserPlus } from "lucide-react"; 
+import { Globe, LogOut, ChevronDown, Briefcase, Settings, UserPlus, ShieldCheck } from "lucide-react"; 
 import { AuthContext } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ const Navbar = () => {
     const handleLogout = () => {
         dispatch({ type: "LOGOUT" });
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         toast.success("Logged out successfully");
         navigate("/login");
     };
@@ -24,11 +25,12 @@ const Navbar = () => {
     }, []);
 
     const displayName = user?.details?.username || user?.username;
+    const userRole = user?.details?.role || user?.role;
     const initial = displayName ? displayName.charAt(0).toUpperCase() : "U";
 
     return (
         <header 
-            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
+            className={`fixed top-0 left-0 right-0 z-[2000] transition-all duration-500 ${
                 isScrolled 
                 ? "bg-white/70 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] py-3 border-b border-white/20" 
                 : "bg-transparent py-6"
@@ -98,11 +100,11 @@ const Navbar = () => {
                                 {/* Dropdown Menu */}
                                 {showUserMenu && (
                                     <>
-                                        <div className="fixed inset-0 z-[-1]" onClick={() => setShowUserMenu(false)} />
-                                        <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 p-2 animate-in fade-in zoom-in duration-200">
+                                        <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
+                                        <div className="absolute right-0 z-20 mt-3 w-56 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 p-2 animate-in fade-in zoom-in duration-200">
                                             
                                             {/* KIỂM TRA ROLE PROVIDER */}
-                                            {(user?.role === "provider" || user?.details?.role === "provider") ? (
+                                            {(userRole === "provider" || userRole === "admin") ? (
                                                 <>
                                                     <Link to="/host/dashboard" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-xl transition-colors font-bold">
                                                         <Briefcase size={18} /> Host Dashboard
@@ -110,6 +112,11 @@ const Navbar = () => {
                                                     <Link to="/create-hotel" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-green-600 hover:bg-green-50 rounded-xl transition-colors font-bold">
                                                         <UserPlus size={18} /> List your property
                                                     </Link>
+                                                    {userRole === "admin" && (
+                                                        <Link to="/admin/hotels/review" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-violet-700 hover:bg-violet-50 rounded-xl transition-colors font-bold">
+                                                            <ShieldCheck size={18} /> Review properties
+                                                        </Link>
+                                                    )}
                                                 </>
                                             ) : (
                                                 /* NẾU LÀ USER THƯỜNG THÌ HIỆN BECOME A HOST */
