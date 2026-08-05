@@ -9,6 +9,7 @@ import {
   getReviewHotels,
   reviewHotel,
   setHotelFeatured,
+  setHotelBookingEnabled,
   refreshHotelCoordinates,
   submitHotelForReview,
   updateHotel,
@@ -27,6 +28,7 @@ router.get("/review", verifyToken, verifyAdmin, getReviewHotels);
 router.post("/geocode-preview", verifyToken, verifyProvider, previewHotelCoordinates);
 router.patch("/:id/review", verifyToken, verifyAdmin, reviewHotel);
 router.patch("/:id/featured", verifyToken, verifyAdmin, setHotelFeatured);
+router.patch("/:id/booking-availability", verifyToken, verifyProvider, setHotelBookingEnabled);
 router.patch("/:id/geocode", verifyToken, verifyAdmin, refreshHotelCoordinates);
 router.post("/:id/submit", verifyToken, verifyProvider, submitHotelForReview);
 router.post("/:id/withdraw", verifyToken, verifyProvider, withdrawHotelReview);

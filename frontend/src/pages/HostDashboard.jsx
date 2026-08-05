@@ -5,6 +5,7 @@ import {
   CircleCheck,
   Clock3,
   Eye,
+  CalendarCheck,
   FilePenLine,
   Plus,
   RefreshCw,
@@ -137,6 +138,11 @@ const HostDashboard = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {hotel.status === "active" && (
+                    <Link to={`/host/hotels/${hotel._id}/bookings`} title="View bookings" className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-blue-700 transition hover:bg-blue-100">
+                      <CalendarCheck size={17} />
+                    </Link>
+                  )}
                   <Link
                   to={`/hotel/${hotel._id}`}
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100"

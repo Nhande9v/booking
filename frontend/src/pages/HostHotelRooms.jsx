@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, BedDouble, Plus, Send } from "lucide-react";
+import { ArrowLeft, BedDouble, CalendarCheck, Plus, Power, Send } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import RoomCard from "@/components/host/RoomCard";
@@ -170,6 +170,30 @@ const HostHotelRooms = () => {
     }
   };
 
+  const toggleHotelBookings = async () => {
+    try {
+      const response = await api.patch(`/hotels/${hotelId}/booking-availability`, {
+        bookingEnabled: hotel.bookingEnabled === false,
+      });
+      setHotel(response.data);
+      toast.success(response.data.bookingEnabled ? "Property bookings resumed." : "Property bookings paused.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to update booking availability.");
+    }
+  };
+
+  const toggleRoomBookings = async (room) => {
+    try {
+      const response = await api.patch(`/rooms/${room._id}/booking-availability`, {
+        bookingEnabled: room.bookingEnabled === false,
+      });
+      setRooms((current) => current.map((item) => item._id === room._id ? response.data : item));
+      toast.success(response.data.bookingEnabled ? "Room bookings resumed." : "Room bookings paused.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to update room availability.");
+    }
+  };
+
   if (loading) return <p className="p-16 text-center text-slate-500">Loading room types...</p>;
   if (!hotel) return <p className="p-16 text-center text-red-600">Property not found.</p>;
 
@@ -187,6 +211,16 @@ const HostHotelRooms = () => {
             <p className="mt-2 text-sm text-slate-500">Each entry represents a room type and its available inventory.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {hotel.status === "active" && (
+              <>
+                <Link to={`/host/hotels/${hotelId}/bookings`} className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-100">
+                  <CalendarCheck size={18} /> View bookings
+                </Link>
+                <button type="button" onClick={toggleHotelBookings} className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-bold ${hotel.bookingEnabled !== false ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-300 bg-white text-slate-600"}`}>
+                  <Power size={18} /> {hotel.bookingEnabled !== false ? "Bookings on" : "Bookings off"}
+                </button>
+              </>
+            )}
             {hotel.status === "pending" && (
               <button type="button" onClick={withdrawReview} className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 hover:bg-amber-100">Withdraw submission</button>
             )}
@@ -229,9 +263,11 @@ const HostHotelRooms = () => {
                 room={room}
                 editable={editable}
                 canManagePricing={hotel.status === "active"}
+                canManageAvailability={hotel.status === "active"}
                 onEdit={() => openEdit(room)}
                 onDelete={() => deleteRoom(room)}
                 onPricing={() => openPricing(room)}
+                onToggleAvailability={() => toggleRoomBookings(room)}
               />
             ))}
           </div>
