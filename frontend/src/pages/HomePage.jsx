@@ -9,8 +9,9 @@ import HomeCallToAction from "../components/home/HomeCallToAction";
 import api from "../lib/axios";
 
 const Homepage = () => {
-    const [hotelBuffer, setHotelBuffer] =useState([]); 
+    const [hotelBuffer, setHotelBuffer] = useState([]);
     const [discountedRooms, setDiscountedRooms] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const fetchHotels = async () => {
         try {
@@ -23,24 +24,26 @@ const Homepage = () => {
         
         } catch (error) {
             console.error("Lỗi xảy ra khi truy xuất hotels:", error);
+        } finally {
+            setLoading(false);
         }
-    } 
+    };
 
-    useEffect(()=>{
+    useEffect(() => {
         fetchHotels();
-    },[])
+    }, []);
 
-    return(
+    return (
         <div>
             <HeroSection />
             <BookingSteps />
-            <FeaturedHotels hotels={hotelBuffer} />
-            <DiscountSection rooms={discountedRooms}/>
+            <FeaturedHotels hotels={hotelBuffer} loading={loading} />
+            <DiscountSection rooms={discountedRooms} loading={loading} />
             <HomeExtra />
             <Features />
             <HomeCallToAction />
         </div>
-    )
-}
+    );
+};
 
 export default Homepage;

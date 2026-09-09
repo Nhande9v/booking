@@ -16,13 +16,42 @@ const FeaturedHotels = ({ hotels = [], loading = false }) => {
 
   if (loading) {
     return (
-      <section className="bg-[#fcfcfd] px-6 py-20">
-        <div className="mx-auto flex max-w-7xl flex-wrap gap-8">
-          <div className="h-[600px] w-full animate-pulse rounded-[2rem] bg-slate-200 lg:w-[calc(68%-1rem)]" />
+      <section
+        aria-busy="true"
+        aria-label="Loading featured properties"
+        className="bg-[#fcfcfd] px-6 py-20"
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-14">
+            <div className="mb-6 h-6 w-40 animate-pulse rounded-full bg-slate-200" />
 
-          <div className="flex w-full flex-col gap-8 lg:w-[calc(32%-1rem)]">
-            <div className="h-[284px] animate-pulse rounded-[1.5rem] bg-slate-200" />
-            <div className="h-[284px] animate-pulse rounded-[1.5rem] bg-slate-200" />
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="space-y-3">
+                <div className="h-14 w-80 max-w-full animate-pulse rounded-xl bg-slate-200 md:h-16 md:w-[31rem]" />
+                <div className="h-14 w-72 max-w-full animate-pulse rounded-xl bg-blue-100 md:h-16 md:w-[28rem]" />
+              </div>
+
+              <div className="h-6 w-44 animate-pulse rounded bg-slate-200" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-stretch gap-8">
+            <div className="flex w-full lg:w-[calc(68%-1rem)]">
+              <div className="h-[600px] w-full animate-pulse rounded-[2rem] bg-slate-200" />
+            </div>
+
+            <div className="flex w-full flex-col gap-8 lg:w-[calc(32%-1rem)]">
+              {[1, 2].map((item) => (
+                <div key={item} className="flex-1">
+                  <div className="h-[220px] animate-pulse rounded-[1.5rem] bg-slate-200" />
+                  <div className="space-y-3 px-1 pt-5">
+                    <div className="h-6 w-3/4 animate-pulse rounded bg-slate-200" />
+                    <div className="h-4 w-1/3 animate-pulse rounded bg-slate-100" />
+                    <div className="h-5 w-1/2 animate-pulse rounded bg-blue-100" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
