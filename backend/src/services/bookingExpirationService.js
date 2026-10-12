@@ -1,5 +1,6 @@
 import Booking from "../models/Booking.js";
 import Payment from "../models/Payment.js";
+import RoomReservation from "../models/RoomReservation.js";
 
 const DEFAULT_INTERVAL_MS = 60 * 1000;
 
@@ -29,8 +30,10 @@ export const expirePendingBookings = async (now = new Date()) => {
 
   await Payment.updateMany(
     { bookingId: { $in: bookingIds }, status: "pending" },
-    { $set: { status: "expired" } }
+    { $set: { status: "expired", expiredAt: now } }
   );
+
+  await RoomReservation.deleteMany({ bookingId: { $in: bookingIds } });
 
   return result.modifiedCount;
 };

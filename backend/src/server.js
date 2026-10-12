@@ -1,4 +1,5 @@
-import "dotenv/config";
+import "../env.js";
+
 import express from 'express';
 import bookingRouters from './routes/bookingRouters.js';
 import hotelRouters from './routes/hotelRouters.js';

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
+import RoomReservation from "../models/RoomReservation.js";
 import { createError } from "../utils/error.js";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -124,6 +125,113 @@ const getReservedRoomQuantity = async ({ roomId, checkIn, checkOut, now }) => {
   return summary?.reserved || 0;
 };
 
+const getStayDates = (checkIn, nights) =>
+  Array.from({ length: nights }, (_, index) => {
+    const date = new Date(checkIn);
+    date.setUTCDate(date.getUTCDate() + index);
+    return date;
+  });
+
+const allocateRoomReservations = async ({
+  bookingId,
+  roomId,
+  totalRooms,
+  roomQuantity,
+  stayDates,
+  session,
+}) => {
+  const reservationDocs = [];
+
+  for (const date of stayDates) {
+    const usedReservations = await RoomReservation.find({ roomId, date })
+      .select("unit")
+      .session(session);
+    const usedUnits = new Set(usedReservations.map((reservation) => reservation.unit));
+    const freeUnits = [];
+
+    for (let unit = 1; unit <= totalRooms && freeUnits.length < roomQuantity; unit += 1) {
+      if (!usedUnits.has(unit)) freeUnits.push(unit);
+    }
+
+    if (freeUnits.length < roomQuantity) {
+      throw createError(409, "Not enough rooms are available for the selected dates.");
+    }
+
+    for (const unit of freeUnits) {
+      reservationDocs.push({ bookingId, roomId, date, unit });
+    }
+  }
+
+  try {
+    await RoomReservation.insertMany(reservationDocs, { session, ordered: true });
+  } catch (error) {
+    if (error?.code === 11000) {
+      throw createError(409, "This room was just reserved by another guest. Please try again.");
+    }
+    throw error;
+  }
+};
+
+const isTransactionUnsupported = (error) =>
+  error?.code === 20 ||
+  /Transaction numbers are only allowed|replica set member or mongos/i.test(
+    error?.message || ""
+  );
+
+const createBookingDocument = async ({ bookingData, session = null }) => {
+  if (session) {
+    const [booking] = await Booking.create([bookingData], { session });
+    return booking;
+  }
+
+  return Booking.create(bookingData);
+};
+
+const createBookingWithReservations = async ({
+  bookingData,
+  roomId,
+  totalRooms,
+  roomQuantity,
+  stayDates,
+}) => {
+  const session = await mongoose.startSession();
+  let booking;
+
+  try {
+    await session.withTransaction(async () => {
+      booking = await createBookingDocument({ bookingData, session });
+      await allocateRoomReservations({
+        bookingId: booking._id,
+        roomId,
+        totalRooms,
+        roomQuantity,
+        stayDates,
+        session,
+      });
+    });
+    return booking;
+  } catch (error) {
+    if (!isTransactionUnsupported(error)) throw error;
+
+    booking = await createBookingDocument({ bookingData });
+    try {
+      await allocateRoomReservations({
+        bookingId: booking._id,
+        roomId,
+        totalRooms,
+        roomQuantity,
+        stayDates,
+      });
+      return booking;
+    } catch (fallbackError) {
+      await Booking.deleteOne({ _id: booking._id });
+      throw fallbackError;
+    }
+  } finally {
+    await session.endSession();
+  }
+};
+
 const findBookingWithDetails = (bookingId) =>
   Booking.findById(bookingId)
     .populate("hotelId", "name city address coverPhoto owner status")
@@ -212,20 +320,26 @@ export const createBooking = async (req, res, next) => {
       throw createError(409, "This room does not have a valid price.");
     }
 
-    const booking = await Booking.create({
-      userId: req.user.id,
-      hotelId: hotel._id,
+    const booking = await createBookingWithReservations({
+      bookingData: {
+        userId: req.user.id,
+        hotelId: hotel._id,
+        roomId: room._id,
+        checkIn,
+        checkOut,
+        guests,
+        roomQuantity,
+        nights,
+        pricePerNight,
+        totalPrice: pricePerNight * nights * roomQuantity,
+        status: "pending",
+        paymentStatus: "unpaid",
+        expiresAt: new Date(now.getTime() + BOOKING_HOLD_IN_MS),
+      },
       roomId: room._id,
-      checkIn,
-      checkOut,
-      guests,
+      totalRooms: room.totalRooms,
       roomQuantity,
-      nights,
-      pricePerNight,
-      totalPrice: pricePerNight * nights * roomQuantity,
-      status: "pending",
-      paymentStatus: "unpaid",
-      expiresAt: new Date(now.getTime() + BOOKING_HOLD_IN_MS),
+      stayDates: getStayDates(checkIn, nights),
     });
 
     return res.status(201).json(booking);
@@ -375,6 +489,7 @@ export const cancelBooking = async (req, res, next) => {
     booking.cancelledAt = new Date();
     booking.expiresAt = null;
     await booking.save();
+    await RoomReservation.deleteMany({ bookingId: booking._id });
 
     return res.status(200).json({
       message: "Booking cancelled successfully.",

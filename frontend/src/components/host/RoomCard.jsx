@@ -3,8 +3,11 @@ import { BadgeDollarSign, Eye, Pencil, Power, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getImageUrl } from "@/lib/imageUtils";
 
-const RoomCard = ({ room, editable, canManagePricing, canManageAvailability, onEdit, onDelete, onPricing, onToggleAvailability }) => (
-  <article className="grid gap-4 border-b border-slate-200 p-4 last:border-b-0 sm:grid-cols-[150px_1fr_auto] sm:items-center">
+const RoomCard = ({ room, editable, canManagePricing, canManageAvailability, propertyBookingEnabled = true, onEdit, onDelete, onPricing, onToggleAvailability }) => {
+  const isAcceptingBookings = propertyBookingEnabled !== false && room.bookingEnabled !== false;
+
+  return (
+    <article className="grid gap-4 border-b border-slate-200 p-4 last:border-b-0 sm:grid-cols-[150px_1fr_auto] sm:items-center">
     <img src={getImageUrl(room.coverPhoto) || getImageUrl(room.photos?.[0]) || "/hotel.jpg"} alt={room.title} className="aspect-[4/3] w-full rounded-lg object-cover" />
     <div>
       <h2 className="font-black text-slate-900">{room.title}</h2>
@@ -15,8 +18,8 @@ const RoomCard = ({ room, editable, canManagePricing, canManageAvailability, onE
           <span className="text-sm text-slate-400 line-through">{Number(room.oldPrice).toLocaleString("vi-VN")}₫</span>
         )}
       </div>
-      <p className={`mt-2 text-xs font-bold ${room.bookingEnabled !== false ? "text-emerald-700" : "text-slate-500"}`}>
-        {room.bookingEnabled !== false ? "Accepting bookings" : "Bookings paused"}
+      <p className={`mt-2 text-xs font-bold ${isAcceptingBookings ? "text-emerald-700" : "text-slate-500"}`}>
+        {isAcceptingBookings ? "Accepting bookings" : "Bookings paused"}
       </p>
     </div>
     <div className="flex gap-2">
@@ -49,7 +52,8 @@ const RoomCard = ({ room, editable, canManagePricing, canManageAvailability, onE
         </>
       )}
     </div>
-  </article>
-);
+    </article>
+  );
+};
 
 export default RoomCard;
