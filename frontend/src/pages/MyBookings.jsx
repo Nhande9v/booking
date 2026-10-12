@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import api from "@/lib/axios";
 import { getRoomCoverUrl } from "@/lib/imageUtils";
 
@@ -32,6 +33,7 @@ const formatDate = (value) =>
   }).format(new Date(value));
 
 const MyBookings = () => {
+  const { t, i18n } = useTranslation();
   const [bookings, setBookings] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
   const [page, setPage] = useState(1);
@@ -60,17 +62,17 @@ const MyBookings = () => {
 
   const cancelBooking = async (booking) => {
     const confirmed = window.confirm(
-      `Cancel your booking at ${booking.hotelId?.name || "this property"}?`
+      t("bookings.confirmCancel")
     );
     if (!confirmed) return;
 
     try {
       setCancellingId(booking._id);
       await api.patch(`/bookings/${booking._id}/cancel`);
-      toast.success("Booking cancelled.");
+      toast.success(t("bookings.cancelSuccess"));
       await fetchBookings();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Unable to cancel this booking.");
+      toast.error(error.response?.data?.message || t("bookings.cancelError"));
     } finally {
       setCancellingId(null);
     }
@@ -79,14 +81,32 @@ const MyBookings = () => {
   const payBooking = async (booking) => {
     try {
       setPayingId(booking._id);
+      const locale = i18n.language === "vi" ? "vn" : "en";
       const response = await api.post("/payments/vnpay/checkout", {
         bookingId: booking._id,
-        locale: "vn",
+        locale: locale,
       });
       window.location.assign(response.data.paymentUrl);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Unable to start VNPay checkout.");
+      toast.error(error.response?.data?.message || t("bookings.payError"));
       setPayingId(null);
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "pending":
+        return t("bookings.statusPending");
+      case "confirmed":
+        return t("bookings.statusConfirmed");
+      case "completed":
+        return t("bookings.statusCompleted");
+      case "cancelled":
+        return t("bookings.statusCancelled");
+      case "expired":
+        return t("bookings.statusExpired");
+      default:
+        return status;
     }
   };
 
@@ -95,15 +115,15 @@ const MyBookings = () => {
       <div className="mx-auto max-w-6xl">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-5 border-b border-slate-200 pb-6">
           <div>
-            <p className="text-xs font-bold uppercase text-blue-600">Your stays</p>
-            <h1 className="mt-2 text-3xl font-black text-slate-950">My bookings</h1>
+            <p className="text-xs font-bold uppercase text-blue-600">{t("bookings.yourStays")}</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-950">{t("bookings.title")}</h1>
             <p className="mt-2 text-sm text-slate-600">
-              Review upcoming stays, booking totals, and reservation status.
+              {t("bookings.subtitle")}
             </p>
           </div>
           <button
             type="button"
-            title="Refresh bookings"
+            title={t("bookings.refresh")}
             onClick={fetchBookings}
             className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 bg-white text-slate-600 transition hover:bg-slate-100"
           >
@@ -122,12 +142,12 @@ const MyBookings = () => {
             <span className="grid h-12 w-12 place-items-center rounded-lg bg-blue-50 text-blue-600">
               <BedDouble size={24} />
             </span>
-            <h2 className="mt-4 text-xl font-black text-slate-900">No bookings yet</h2>
+            <h2 className="mt-4 text-xl font-black text-slate-900">{t("bookings.noBookings")}</h2>
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Explore available properties and choose a room for your next stay.
+              {t("bookings.noBookingsDesc")}
             </p>
             <Link to="/search" className="mt-5 rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700">
-              Find a property
+              {t("bookings.browseHotels")}
             </Link>
           </section>
         ) : (
@@ -159,27 +179,27 @@ const MyBookings = () => {
                           {booking.hotelId?.city || "Location unavailable"}
                         </p>
                       </div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ring-1 ${statusStyles[booking.status] || statusStyles.cancelled}`}>
-                        {booking.status}
+                      <span className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${statusStyles[booking.status] || statusStyles.cancelled}`}>
+                        {getStatusLabel(booking.status)}
                       </span>
                     </div>
 
                     <div className="mt-5 grid gap-4 border-y border-slate-100 py-4 sm:grid-cols-3">
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Dates</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">{t("bookings.dates")}</p>
                         <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
                           <CalendarDays size={16} />
                           {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Room</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">{t("common.rooms")}</p>
                         <p className="mt-1 text-sm font-semibold text-slate-700">
                           {booking.roomId?.title || "Room unavailable"} · {booking.roomQuantity}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Total</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">{t("bookings.total")}</p>
                         <p className="mt-1 text-lg font-black text-blue-600">
                           {Number(booking.totalPrice).toLocaleString("vi-VN")}₫
                         </p>
@@ -199,7 +219,7 @@ const MyBookings = () => {
                             className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-200 px-4 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                           >
                             <XCircle size={17} />
-                            {cancellingId === booking._id ? "Cancelling..." : "Cancel booking"}
+                            {cancellingId === booking._id ? t("bookings.cancelling") : t("bookings.cancelStay")}
                           </button>
                         )}
                         {canPay && (
@@ -211,10 +231,8 @@ const MyBookings = () => {
                           >
                             <CreditCard size={17} />
                             {payingId === booking._id
-                              ? "Opening VNPay..."
-                              : booking.paymentStatus === "pending"
-                                ? "Continue payment"
-                                : "Pay with VNPay"}
+                              ? t("bookings.redirectingVnpay")
+                              : t("bookings.payNow")}
                           </button>
                         )}
                       </div>

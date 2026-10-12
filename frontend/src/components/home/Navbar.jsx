@@ -3,8 +3,11 @@ import { Globe, LogOut, ChevronDown, Briefcase, Settings, UserPlus, ShieldCheck 
 import { AuthContext } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { switchLanguage } from "@/lib/i18n";
 
 const Navbar = () => {
+    const { t, i18n } = useTranslation();
     const [isScrolled, setIsScrolled] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const { user, dispatch } = useContext(AuthContext);
@@ -14,7 +17,7 @@ const Navbar = () => {
         dispatch({ type: "LOGOUT" });
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-        toast.success("Logged out successfully");
+        toast.success(t("navbar.loggedOutSuccess"));
         navigate("/login");
     };
 
@@ -27,6 +30,11 @@ const Navbar = () => {
     const displayName = user?.details?.username || user?.username;
     const userRole = user?.details?.role || user?.role;
     const initial = displayName ? displayName.charAt(0).toUpperCase() : "U";
+
+    const currentLang = i18n.language === "vi" ? "VI" : "EN";
+    const toggleLanguage = () => {
+        switchLanguage(i18n.language === "vi" ? "en" : "vi");
+    };
 
     return (
         <header 
@@ -61,21 +69,26 @@ const Navbar = () => {
                         isScrolled ? "text-slate-600" : "text-slate-600"
                     }`}>
                         <li>
-                            <Link to="/" className="hover:text-blue-500 transition-all relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 hover:after:w-full after:transition-all">Home</Link>
+                            <Link to="/" className="hover:text-blue-500 transition-all relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 hover:after:w-full after:transition-all">{t("navbar.home")}</Link>
                         </li>
                         <li>
-                            <Link to="/bookings" className="hover:text-blue-500 transition-all relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 hover:after:w-full after:transition-all">My Bookings</Link>
+                            <Link to="/bookings" className="hover:text-blue-500 transition-all relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 hover:after:w-full after:transition-all">{t("navbar.myBookings")}</Link>
                         </li>
                     </ul>
 
                     <div className="h-6 w-[1px] bg-slate-300/30" />
 
                     <div className="flex items-center gap-6">
-                        <button className={`flex items-center gap-2 text-sm font-bold transition-colors ${
-                            isScrolled ? "text-slate-600 hover:text-blue-600" : "text-slate-600 hover:text-white"
-                        }`}>
-                            <Globe size={18} className="animate-spin-slow" />
-                            <span>EN</span>
+                        <button 
+                            type="button"
+                            onClick={toggleLanguage}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 text-sm font-bold transition-all hover:scale-105 ${
+                                isScrolled ? "bg-slate-50 text-slate-700 hover:text-blue-600 hover:border-blue-300" : "bg-white/80 text-slate-800 hover:bg-white"
+                            }`}
+                            title="Đổi ngôn ngữ / Switch language"
+                        >
+                            <Globe size={16} className="text-blue-600" />
+                            <span>{currentLang}</span>
                         </button>
 
                         {user ? (
@@ -107,32 +120,32 @@ const Navbar = () => {
                                             {(userRole === "provider" || userRole === "admin") ? (
                                                 <>
                                                     <Link to="/host/dashboard" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-xl transition-colors font-bold">
-                                                        <Briefcase size={18} /> Host Dashboard
+                                                        <Briefcase size={18} /> {t("navbar.hostDashboard")}
                                                     </Link>
                                                     <Link to="/create-hotel" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-green-600 hover:bg-green-50 rounded-xl transition-colors font-bold">
-                                                        <UserPlus size={18} /> List your property
+                                                        <UserPlus size={18} /> {t("navbar.listProperty")}
                                                     </Link>
                                                     {userRole === "admin" && (
                                                         <Link to="/admin/hotels/review" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-violet-700 hover:bg-violet-50 rounded-xl transition-colors font-bold">
-                                                            <ShieldCheck size={18} /> Review properties
+                                                            <ShieldCheck size={18} /> {t("navbar.reviewProperties")}
                                                         </Link>
                                                     )}
                                                 </>
                                             ) : (
                                                 /* NẾU LÀ USER THƯỜNG THÌ HIỆN BECOME A HOST */
                                                 <Link to="/become-a-host" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 rounded-xl transition-colors font-bold">
-                                                    <UserPlus size={18} /> Become a Host
+                                                    <UserPlus size={18} /> {t("navbar.becomeHost")}
                                                 </Link>
                                             )}
 
                                             <div className="h-[1px] bg-slate-100 my-2 mx-2" />
 
                                             <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors">
-                                                <Settings size={18} /> Account Settings
+                                                <Settings size={18} /> {t("navbar.accountSettings")}
                                             </Link>
                                             
                                             <Link to="/bookings" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors">
-                                                <Briefcase size={18} /> My Bookings
+                                                <Briefcase size={18} /> {t("navbar.myBookings")}
                                             </Link>
 
                                             <div className="h-[1px] bg-slate-100 my-2 mx-2" />
@@ -140,7 +153,7 @@ const Navbar = () => {
                                                 onClick={handleLogout}
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                                             >
-                                                <LogOut size={18} /> Sign Out
+                                                <LogOut size={18} /> {t("navbar.logout")}
                                             </button> 
                                         </div>
                                     </>
@@ -155,7 +168,7 @@ const Navbar = () => {
                                     : "bg-white text-blue-900 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)]"
                                 }`}
                             >
-                                Sign In
+                                {t("navbar.login")}
                             </Link>
                         )}
                     </div>

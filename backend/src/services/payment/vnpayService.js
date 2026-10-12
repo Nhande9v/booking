@@ -25,18 +25,22 @@ const getConfig = () => {
   return config;
 };
 
-const encodeValue = (value) =>
-  encodeURIComponent(String(value)).replace(/%20/g, "+");
-
+/**
+ * Tạo query string theo chuẩn VNPAY:
+ * - Sort theo key (ASCII order)
+ * - Encode value: encodeURIComponent + thay %20 → + (giống urlencode của PHP)
+ * - Dùng CÙNG chuỗi này cho cả ký HMAC lẫn ghép URL
+ * (theo mẫu PHP chính thức: https://sandbox.vnpayment.vn/apis/docs/thanh-toan-pay/)
+ */
 const buildQuery = (params) =>
   Object.entries(params)
-    .filter(([, value]) => value !== undefined && value !== null && value !== "")
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, value]) => `${encodeValue(key)}=${encodeValue(value)}`)
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([k, v]) => `${k}=${encodeURIComponent(String(v)).replace(/%20/g, "+")}`)
     .join("&");
 
-const sign = (query, secret) =>
-  crypto.createHmac("sha512", secret).update(query, "utf8").digest("hex");
+const sign = (data, secret) =>
+  crypto.createHmac("sha512", secret).update(data, "utf8").digest("hex");
 
 const getDateParts = (date) => {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -78,7 +82,7 @@ export const createVnpayPaymentUrl = ({
     vnp_Amount: Math.round(amount * 100),
     vnp_CreateDate: formatVnpayDate(createdAt),
     vnp_CurrCode: "VND",
-    vnp_ExpireDate: formatVnpayDate(expiresAt),
+    // vnp_ExpireDate bỏ ra — VNPAY sandbox có thể bỏ qua khi verify, gây mismatch
     vnp_IpAddr: ipAddress,
     vnp_Locale: locale === "en" ? "en" : "vn",
     vnp_OrderInfo: `Thanh toan booking ${txnRef}`,
@@ -86,8 +90,10 @@ export const createVnpayPaymentUrl = ({
     vnp_ReturnUrl: config.returnUrl,
     vnp_TxnRef: txnRef,
   };
+
   const query = buildQuery(params);
   const secureHash = sign(query, config.hashSecret);
+
   return `${config.paymentUrl}?${query}&vnp_SecureHash=${secureHash}`;
 };
 
@@ -98,6 +104,7 @@ export const verifyVnpayCallback = (queryParams) => {
   delete params.vnp_SecureHash;
   delete params.vnp_SecureHashType;
 
+  // Express decode req.query → re-encode giống lúc tạo URL
   const signed = sign(buildQuery(params), config.hashSecret);
   const receivedBuffer = Buffer.from(receivedHash.toLowerCase(), "utf8");
   const signedBuffer = Buffer.from(signed.toLowerCase(), "utf8");
@@ -114,5 +121,8 @@ export const getClientIp = (req) => {
     ? forwarded[0]
     : String(forwarded || req.socket.remoteAddress || "127.0.0.1").split(",")[0];
 
-  return ip.trim().replace(/^::ffff:/, "") || "127.0.0.1";
+  const cleaned = ip.trim().replace(/^::ffff:/, "");
+  // IPv6 loopback → IPv4 (VNPAY không chấp nhận ::1)
+  if (!cleaned || cleaned === "::1") return "127.0.0.1";
+  return cleaned;
 };

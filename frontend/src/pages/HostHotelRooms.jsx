@@ -264,6 +264,7 @@ const HostHotelRooms = () => {
                 editable={editable}
                 canManagePricing={hotel.status === "active"}
                 canManageAvailability={hotel.status === "active"}
+                propertyBookingEnabled={hotel.bookingEnabled}
                 onEdit={() => openEdit(room)}
                 onDelete={() => deleteRoom(room)}
                 onPricing={() => openPricing(room)}

@@ -93,4 +93,13 @@ const bookingSchema = new mongoose.Schema(
 bookingSchema.index({ roomId: 1, checkIn: 1, checkOut: 1, status: 1 });
 bookingSchema.index({ status: 1, expiresAt: 1 });
 
+// Tự động xóa booking đã expired sau 7 ngày (7 * 24 * 60 * 60 = 604800 giây)
+bookingSchema.index(
+  { expiredAt: 1 },
+  {
+    expireAfterSeconds: 7 * 24 * 60 * 60,
+    partialFilterExpression: { status: "expired" },
+  }
+);
+
 export default mongoose.model("Booking", bookingSchema);

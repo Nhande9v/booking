@@ -103,7 +103,8 @@ const Hoteldetail = () => {
           hotel={{
             ...hotel,
             price : selectedRoom ? selectedRoom.price : hotel.price,
-            selectedRoomId: selectedRoom?._id 
+            selectedRoom,
+            selectedRoomId: selectedRoom?._id
           }} />
         </div>
       </div>

@@ -77,6 +77,10 @@ const paymentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    expiredAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -86,6 +90,15 @@ paymentSchema.index(
   {
     unique: true,
     partialFilterExpression: { status: "pending" },
+  }
+);
+
+// Tự động xóa payment records đã expired sau 7 ngày (7 * 24 * 60 * 60 = 604800 giây)
+paymentSchema.index(
+  { expiredAt: 1 },
+  {
+    expireAfterSeconds: 7 * 24 * 60 * 60,
+    partialFilterExpression: { status: "expired" },
   }
 );
 

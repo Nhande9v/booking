@@ -1,6 +1,32 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Search, LoaderCircle } from "lucide-react";
+import { removeAccents } from "@/lib/stringUtils";
+
+const fallbackLocations = [
+  { keywords: ["da nang", "danang"], lat: 16.0544, lng: 108.2022, name: "Da Nang" },
+  { keywords: ["ha noi", "hanoi"], lat: 21.0285, lng: 105.8542, name: "Ha Noi" },
+  { keywords: ["ho chi minh", "sai gon", "saigon", "hcm"], lat: 10.8231, lng: 106.6297, name: "Ho Chi Minh City" },
+  { keywords: ["nha trang"], lat: 12.2388, lng: 109.1967, name: "Nha Trang" },
+  { keywords: ["da lat", "dalat"], lat: 11.9404, lng: 108.4583, name: "Da Lat" },
+  { keywords: ["phu quoc"], lat: 10.2899, lng: 103.984, name: "Phu Quoc" },
+  { keywords: ["hoi an"], lat: 15.8801, lng: 108.338, name: "Hoi An" },
+];
+
+const defaultSearchLocation = {
+  lat: 16.0544,
+  lng: 108.2022,
+  name: "Da Nang",
+};
+
+const getFallbackLocation = (destination) => {
+  const normalizedDestination = removeAccents(destination);
+  const matchedLocation = fallbackLocations.find((location) =>
+    location.keywords.some((keyword) => normalizedDestination.includes(keyword))
+  );
+
+  return matchedLocation || { ...defaultSearchLocation, name: destination };
+};
 
 const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,6 +46,8 @@ const HeroSection = () => {
     setSearching(true);
     setError("");
 
+    const fallbackLocation = getFallbackLocation(destination);
+
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}`,
@@ -31,7 +59,7 @@ const HeroSection = () => {
       const data = await res.json();
 
       if (!data.length) {
-        setError("Destination not found. Please try another location.");
+        navigate("/search", { state: fallbackLocation });
         return;
       }
 
@@ -46,7 +74,7 @@ const HeroSection = () => {
       });
     } catch (err) {
       console.error("Destination search failed:", err);
-      setError("Unable to search right now. Please try again.");
+      navigate("/search", { state: fallbackLocation });
     } finally {
       setSearching(false);
     }
